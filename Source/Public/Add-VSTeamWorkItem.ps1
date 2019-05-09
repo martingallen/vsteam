@@ -11,10 +11,33 @@ function Add-VSTeamWorkItem {
       [string]$IterationPath,
 
       [Parameter(Mandatory = $false)]
-      [string]$AssignedTo,
+      [string]$AreaPath,
 
       [Parameter(Mandatory = $false)]
-      [int]$ParentId
+      [string]$AssignedTo,
+
+      # The tags parameter can tokenised by semi-colon followed by a space to create multiple tags on a work item e.g. "Tag 1; Tag 2; Fred" creates three tags
+      [Parameter(Mandatory = $false)]
+      [string]$Tags,
+
+      # Original Estimate is in hours and will appear in the remaining work field in Azure DevOps
+      [Parameter(Mandatory = $false)]
+      [int]$OriginalEstimate,
+
+      [Parameter(Mandatory = $false)]
+      [int]$ParentId,
+
+      [Parameter(Mandatory = $false)]
+      [int]$ChildId,
+
+      [Parameter(Mandatory = $false)]
+      [int]$PredecessorId,
+
+      [Parameter(Mandatory = $false)]
+      [int]$SuccessorId,
+
+      [Parameter(Mandatory = $false)]
+      [int]$RelatedId
    )
 
    DynamicParam {
@@ -67,9 +90,39 @@ function Add-VSTeamWorkItem {
          }
          @{
             op    = "add"
+            path  = "/fields/System.AreaPath"
+            value = $AreaPath
+         }
+         @{
+            op    = "add"
+            path  = "/fields/System.Tags"
+            value = $Tags
+         }
+         @{
+            op    = "add"
+            path  = "/fields/Microsoft.VSTS.Scheduling.OriginalEstimate"
+            value = $OriginalEstimate
+         }
+         @{
+            op    = "add"
             path  = "/fields/System.AssignedTo"
             value = $AssignedTo
          }) | Where-Object { $_.value}
+
+         # details on "relations" can be found at the URL below
+         # https://docs.microsoft.com/en-us/rest/api/azure/devops/wit/work%20item%20relation%20types/list?view=azure-devops-rest-5.0
+
+         if ($ChildId) {
+            $childUri = _buildRequestURI -ProjectName $ProjectName -Area 'wit' -Resource 'workitems' -id $ChildId
+            $body += @{
+               op    = "add"
+               path  = "/relations/-"
+               value = @{
+                  "rel" = "System.LinkTypes.Hierarchy-Forward"
+                  "url" = $childUri
+               }
+            }
+         }
 
          if ($ParentId) {
             $parentUri = _buildRequestURI -ProjectName $ProjectName -Area 'wit' -Resource 'workitems' -id $ParentId
@@ -79,6 +132,42 @@ function Add-VSTeamWorkItem {
                value = @{
                   "rel" = "System.LinkTypes.Hierarchy-Reverse"
                   "url" = $parentURI
+               }
+            }
+         }
+
+         if ($PredecessorId) {
+            $predecessorUri = _buildRequestURI -ProjectName $ProjectName -Area 'wit' -Resource 'workitems' -id $PredecessorId
+            $body += @{
+               op    = "add"
+               path  = "/relations/-"
+               value = @{
+                  "rel" = "System.LinkTypes.Dependency-Reverse"
+                  "url" = $predecessorUri
+               }
+            }
+         }
+
+         if ($SuccessorId) {
+            $successorUri = _buildRequestURI -ProjectName $ProjectName -Area 'wit' -Resource 'workitems' -id $SuccessorId
+            $body += @{
+               op    = "add"
+               path  = "/relations/-"
+               value = @{
+                  "rel" = "System.LinkTypes.Dependency-Forward"
+                  "url" = $successorUri
+               }
+            }
+         }
+
+         if ($RelatedId) {
+            $relatedUri = _buildRequestURI -ProjectName $ProjectName -Area 'wit' -Resource 'workitems' -id $RelatedId
+            $body += @{
+               op    = "add"
+               path  = "/relations/-"
+               value = @{
+                  "rel" = "System.LinkTypes.Related"
+                  "url" = $relatedUri
                }
             }
          }
