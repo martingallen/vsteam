@@ -20,9 +20,13 @@ function Add-VSTeamWorkItem {
       [Parameter(Mandatory = $false)]
       [string]$Tags,
 
-      # Original Estimate is in hours and will appear in the remaining work field in Azure DevOps
+      # Original Estimate is in hours and will appear in the original estimate field in Azure DevOps
       [Parameter(Mandatory = $false)]
       [int]$OriginalEstimate,
+
+      # Remaining Work is in hours and will appear in the remaining work field in Azure DevOps
+      [Parameter(Mandatory = $false)]
+      [int]$RemainingWork,
 
       [Parameter(Mandatory = $false)]
       [int]$ParentId,
@@ -102,6 +106,11 @@ function Add-VSTeamWorkItem {
             op    = "add"
             path  = "/fields/Microsoft.VSTS.Scheduling.OriginalEstimate"
             value = $OriginalEstimate
+         }
+         @{
+            op    = "add"
+            path  = "/fields/Microsoft.VSTS.Scheduling.RemainingWork"
+            value = $RemainingWork
          }
          @{
             op    = "add"

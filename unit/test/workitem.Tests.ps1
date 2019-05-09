@@ -82,7 +82,7 @@ InModuleScope VSTeam {
 
          It 'With Default Project should add work item with iteration path, area path, parent, child, successor, predecessor, related and tags' {
             $Global:PSDefaultParameterValues["*:projectName"] = 'test'
-            Add-VSTeamWorkItem -ProjectName test -WorkItemType Task -Title Test1 -Description Testing -IterationPath 'test\Sprint 1' -AreaPath 'test' -ParentId 25 -ChildId 55 -SuccessorId 23 -PredecessorId 4 -RelatedId 7 -Tags 'Fred; Bob'
+            Add-VSTeamWorkItem -ProjectName test -WorkItemType Task -Title Test1 -Description Testing -RemainingWork 1 -OriginalEstimate 5 -IterationPath 'test\Sprint 1' -AreaPath 'test' -ParentId 25 -ChildId 55 -SuccessorId 23 -PredecessorId 4 -RelatedId 7 -Tags 'Fred; Bob'
 
             Assert-MockCalled Invoke-RestMethod -Exactly -Scope It -Times 1 -ParameterFilter {
                $Method -eq 'Post' -and
@@ -95,6 +95,7 @@ InModuleScope VSTeam {
                $Body -like '*/fields/System.AreaPath*' -and
                $Body -like '*/fields/System.Tags*' -and
                $Body -like '*/fields/Microsoft.VSTS.Scheduling.OriginalEstimate*' -and
+               $Body -like '*/fields/Microsoft.VSTS.Scheduling.RemainingWork*' -and
                $Body -like '*/relations/-*' -and
                $Body -like '*_apis/wit/workitems/25*' -and
                $Body -like '*System.LinkTypes.Hierarchy-Reverse*' -and
